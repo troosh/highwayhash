@@ -28,6 +28,10 @@
 #include <intrin.h>
 #endif
 
+#if HH_ARCH_E2K
+#include <x86intrin.h>
+#endif
+
 namespace highwayhash {
 
 // Start/Stop return absolute timestamps and must be placed immediately before
@@ -113,6 +117,8 @@ inline uint64_t Start<uint64_t>() {
       // "memory" avoids reordering. rdx = TSC >> 32.
       // "cc" = flags modified by SHL.
       : "rdx", "memory", "cc");
+#elif HH_ARCH_E2K
+  asm volatile("rrd %%clkr, %0" : "=r" (t));
 #else
 #error "Port"
 #endif
@@ -144,6 +150,8 @@ inline uint64_t Stop<uint64_t>() {
       // "memory" avoids reordering. rcx = TSC_AUX. rdx = TSC >> 32.
       // "cc" = flags modified by SHL.
       : "rcx", "rdx", "memory", "cc");
+#elif HH_ARCH_E2K
+  asm volatile("rrd %%clkr, %0" : "=r" (t));
 #else
 #error "Port"
 #endif

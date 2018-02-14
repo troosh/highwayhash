@@ -40,6 +40,10 @@ class InstructionSets {
   static HH_INLINE TargetBits Supported() {
     return HH_TARGET_VSX | HH_TARGET_Portable;
   }
+#elif HH_ARCH_E2K
+  static HH_INLINE TargetBits Supported() {
+    return HH_TARGET_SSE41 | HH_TARGET_Portable;
+  }
 #else
   static HH_INLINE TargetBits Supported() { return HH_TARGET_Portable; }
 #endif
@@ -50,7 +54,7 @@ class InstructionSets {
   // this should only be called infrequently (e.g. hoisting it out of loops).
   template <template <TargetBits> class Func, typename... Args>
   static HH_INLINE TargetBits Run(Args&&... args) {
-#if HH_ARCH_X64
+#if HH_ARCH_X64 || HH_ARCH_E2K
     const TargetBits supported = Supported();
     if (supported & HH_TARGET_AVX2) {
       Func<HH_TARGET_AVX2>()(std::forward<Args>(args)...);
@@ -79,7 +83,7 @@ class InstructionSets {
   static HH_INLINE TargetBits RunAll(Args&&... args) {
     const TargetBits supported = Supported();
 
-#if HH_ARCH_X64
+#if HH_ARCH_X64 || HH_ARCH_E2K
     if (supported & HH_TARGET_AVX2) {
       Func<HH_TARGET_AVX2>()(std::forward<Args>(args)...);
     }

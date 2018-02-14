@@ -71,6 +71,10 @@
 #endif
 #endif
 
+#if HH_ARCH_E2K
+#include <x86intrin.h>
+#endif
+
 #include "highwayhash/robust_statistics.h"
 #include "highwayhash/tsc_timer.h"
 
@@ -131,7 +135,7 @@ class CacheAligned {
     free(allocated);
   }
 
-#if HH_ARCH_X64
+#if HH_ARCH_X64 || HH_ARCH_E2K
   // Overwrites "to" without loading it into the cache (read-for-ownership).
   template <typename T>
   static void StreamCacheLine(const T* from_items, T* to_items) {
@@ -218,7 +222,7 @@ struct Accumulator {
   uint64_t num_calls = 0;  // upper bits = biased_offset.
   uint64_t total_duration = 0;
 };
-#if HH_ARCH_X64
+#if HH_ARCH_X64 || HH_ARCH_E2K
 static_assert(sizeof(Accumulator) == sizeof(__m128i), "Wrong Accumulator size");
 #endif
 
@@ -337,7 +341,7 @@ class Results {
   }
 
  private:
-#if HH_ARCH_X64
+#if HH_ARCH_X64 || HH_ARCH_E2K
   static bool SameOffset(const __m128i& zone, const size_t biased_offset) {
     const uint64_t num_calls = _mm_cvtsi128_si64(zone);
     return (num_calls >> Accumulator::kNumCallBits) == biased_offset;
@@ -353,7 +357,7 @@ class Results {
                    const uint64_t duration) {
     assert(biased_offset < (1ULL << Packet::kOffsetBits));
 
-#if HH_ARCH_X64
+#if HH_ARCH_X64 || HH_ARCH_E2K
     const __m128i num_calls_64 = _mm_cvtsi64_si128(num_calls);
     const __m128i duration_64 = _mm_cvtsi64_si128(duration);
     const __m128i add_duration_call =
@@ -508,7 +512,7 @@ class ThreadSpecific {
   }
 
   void AnalyzeRemainingPackets() {
-#if HH_ARCH_X64
+#if HH_ARCH_X64 || HH_ARCH_E2K
     // Ensures prior weakly-ordered streaming stores are globally visible.
     _mm_sfence();
 
@@ -530,7 +534,7 @@ class ThreadSpecific {
  private:
   // Write packet to buffer/storage, emptying them as needed.
   void Write(const Packet packet) {
-#if HH_ARCH_X64
+#if HH_ARCH_X64 || HH_ARCH_E2K
     // Buffer full => copy to storage.
     if (buffer_size_ == kBufferCapacity) {
       // Storage full => empty it.
@@ -559,7 +563,7 @@ class ThreadSpecific {
 
   // Write-combining buffer to avoid cache pollution. Must be the first
   // non-static member to ensure cache-line alignment.
-#if HH_ARCH_X64
+#if HH_ARCH_X64 || HH_ARCH_E2K
   Packet buffer_[kBufferCapacity];
   size_t buffer_size_ = 0;
 #endif
@@ -685,7 +689,7 @@ inline void ThreadSpecific::ComputeOverhead() {
       for (size_t idx_duration = 0; idx_duration < kNumDurations;
            ++idx_duration) {
         { PROFILER_ZONE("Dummy Zone (never shown)"); }
-#if HH_ARCH_X64
+#if HH_ARCH_X64 || HH_ARCH_E2K
         const uint64_t duration = results_.ZoneDuration(buffer_);
         buffer_size_ = 0;
 #else
@@ -729,7 +733,7 @@ inline void ThreadSpecific::ComputeOverhead() {
       _mm_sfence();
 #endif
       const uint64_t t1 = Stop<uint64_t>();
-#if HH_ARCH_X64
+#if HH_ARCH_X64 || HH_ARCH_E2K
       PROFILER_CHECK(num_packets_ + buffer_size_ == kReps * 2);
       buffer_size_ = 0;
 #else

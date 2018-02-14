@@ -52,6 +52,12 @@ namespace highwayhash {
 #define HH_ARCH_X64 0
 #endif
 
+#if defined(__e2k__)
+#define HH_ARCH_E2K 1
+#else
+#define HH_ARCH_E2K 0
+#endif
+
 #ifdef __aarch64__
 #define HH_ARCH_AARCH64 1
 #else

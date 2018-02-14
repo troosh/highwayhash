@@ -114,6 +114,32 @@ double DetectNominalClockRate() {
       }
     }
   }
+#elif HH_ARCH_E2K
+  double freq = -1;
+  char line[200];
+  char* s;
+  char* value;
+
+  FILE* f = fopen("/proc/cpuinfo", "r");
+  if (f != nullptr) {
+    while (fgets(line, sizeof(line), f) != nullptr) {
+      // NOTE: the ':' is the only character we can rely on
+      if (!(value = strchr(line, ':'))) continue;
+      // terminate the valuename
+      *value++ = '\0';
+      // skip any leading spaces
+      while (*value == ' ') value++;
+      if ((s = strchr(value, '\n'))) *s = '\0';
+
+      if (!strncasecmp(line, "cpu MHz", strlen("cpu MHz")) &&
+          sscanf(value, "%lf", &freq) == 1) {
+        freq *= 1E6;
+        break;
+      }
+    }
+    fclose(f);
+    return freq;
+  }
 #elif HH_ARCH_PPC
   double freq = -1;
   char line[200];

@@ -1,5 +1,8 @@
 # We assume X64 unless HH_POWER or HH_AARCH64 are defined.
 
+HH_E2K = 1
+CXX=/home/admlcc/ecomp.rel-i-1/lxx_e
+
 override CPPFLAGS += -I.
 override CXXFLAGS += -std=c++11 -Wall -O3 -fPIC -pthread
 override LDFLAGS += -pthread
@@ -29,10 +32,17 @@ HH_X64 =
 HIGHWAYHASH_OBJS += obj/hh_vsx.o
 HIGHWAYHASH_TEST_OBJS += obj/highwayhash_test_vsx.o
 else
+ifdef HH_E2K
+HH_X64 =
+HIGHWAYHASH_OBJS += obj/hh_sse41.o
+HIGHWAYHASH_TEST_OBJS += obj/highwayhash_test_sse41.o
+VECTOR_TEST_OBJS += obj/vector_test_sse41.o
+else
 HH_X64 = 1
 HIGHWAYHASH_OBJS += obj/hh_avx2.o obj/hh_sse41.o
 HIGHWAYHASH_TEST_OBJS += obj/highwayhash_test_avx2.o obj/highwayhash_test_sse41.o
 VECTOR_TEST_OBJS += obj/vector_test_avx2.o obj/vector_test_sse41.o
+endif
 endif
 endif
 
@@ -75,6 +85,16 @@ obj/vector_test_avx2.o: CXXFLAGS+=-mavx2
 obj/vector_test_sse41.o: CXXFLAGS+=-msse4.1
 
 obj/benchmark.o: CXXFLAGS+=-mavx2
+endif
+
+ifdef HH_E2K
+obj/sip_tree_hash.o: CXXFLAGS+=-msse4.1
+# (Compiled from same source file with different compiler flags)
+obj/highwayhash_test_sse41.o: CXXFLAGS+=-msse4.1
+obj/hh_sse41.o: CXXFLAGS+=-msse4.1
+obj/vector_test_sse41.o: CXXFLAGS+=-msse4.1
+
+obj/benchmark.o: CXXFLAGS+=-msse4.1
 endif
 
 ifdef HH_POWER

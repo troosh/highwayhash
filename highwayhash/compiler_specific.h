@@ -46,7 +46,7 @@
 
 //-----------------------------------------------------------------------------
 
-#if HH_GCC_VERSION && HH_GCC_VERSION < 408
+#if (HH_GCC_VERSION && HH_GCC_VERSION < 408) || defined(__e2k__)
 #define HH_ALIGNAS(multiple) __attribute__((aligned(multiple)))
 #else
 #define HH_ALIGNAS(multiple) alignas(multiple)  // C++11
